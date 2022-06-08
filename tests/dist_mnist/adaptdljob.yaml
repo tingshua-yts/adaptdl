@@ -1,0 +1,19 @@
+apiVersion: adaptdl.petuum.com/v1
+kind: AdaptDLJob
+metadata:
+  generateName: dist-mnist-
+spec:
+  minReplicas: 1
+  maxReplicas: 3
+  template:
+    spec:
+      containers:
+      - name: main
+        command:
+        - python3
+        - /root/mnist.py
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+          requests:
+            nvidia.com/gpu: "1"        
