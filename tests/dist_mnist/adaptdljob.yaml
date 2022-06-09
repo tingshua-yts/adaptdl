@@ -3,7 +3,7 @@ kind: AdaptDLJob
 metadata:
   generateName: dist-mnist-
 spec:
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 3
   template:
     spec:

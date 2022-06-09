@@ -157,7 +157,8 @@ def submit(args, remaining):
             })
 
     volume_name = "adaptdl-pvc"
-    pvc_name = "adaptdl-pvc-{}".format(str(uuid.uuid4()))
+#    pvc_name = "adaptdl-pvc-{}".format(str(uuid.uuid4()))
+    pvc_name="adaptdl-pvc"
     volume = {
         "name": volume_name,
         "persistentVolumeClaim": {
@@ -186,13 +187,13 @@ def submit(args, remaining):
     volumes = pod_spec.setdefault("volumes", [])
     volumes.append(volume)
 
-    storage_class = get_storageclass(name=args.checkpoint_storage_class)
+    #storage_class = get_storageclass(name=args.checkpoint_storage_class)
     custom_object_api = kubernetes.client.CustomObjectsApi()
     adaptdljob = custom_object_api.create_namespaced_custom_object(
         "adaptdl.petuum.com", "v1", namespace, "adaptdljobs", resource)
-    create_pvc(name=pvc_name, storage_class=storage_class,
-               size=args.checkpoint_storage_size,
-               owner_metadata=adaptdljob["metadata"])
+    # create_pvc(name=pvc_name, storage_class=storage_class,
+    #            size=args.checkpoint_storage_size,
+    #            owner_metadata=adaptdljob["metadata"])
 
 
 def cp(args, remaining):
