@@ -115,12 +115,14 @@ class AdaptDLController(object):
         preemptible = job["spec"].get("preemptible", True)
         if (completion_status := self._detect_completion(pods, preemptible)):
             # Job is already completed.
+            # 处理Job运行结束的情况
             job["status"].update(completion_status)
             job["status"].setdefault("completionTimestamp", current_ts)
             job["status"]["allocation"] = allocation = []
             await self._delete_pods(  # Keep failed pods for debug purposes.
                 [pod for pod in pods if pod.status.phase != "Failed"])
         elif phase == "Pending":
+            # 已经被allocator分配完资源了，状态由Pending变为Starting
             if allocation and not pods:
                 # Start the next group of pods.
                 job["status"]["phase"] = "Starting"
@@ -134,13 +136,12 @@ class AdaptDLController(object):
                 job["status"]["phase"] = "Stopping"
             elif allocation and not pods:
                 # Start the next group of pods.
+                # 创建pod
                 job["status"]["group"] = job["status"].get("group", -1) + 1
                 try:
                     new_pods = []
                     for rank in range(len(allocation)):
-                        pod = await self._create_pod(
-                            job["metadata"],
-                            job["spec"]["template"], allocation,
+                        pod = await self._create_pod( job["metadata"], job["spec"]["template"], allocation,
                             job["status"]["group"], rank)
                         new_pods.append(pod)
                 except kubernetes.client.rest.ApiException as e:
@@ -155,6 +156,7 @@ class AdaptDLController(object):
                 job["status"]["phase"] = "Stopping"
             elif self._count_ready_pods(pods) == replicas:
                 # all pods are running
+                # 所有pod都运行了，更改为running状态
                 job["status"]["phase"] = "Running"
         elif phase == "Running":
             if self._detect_restart(pods, allocation) or \

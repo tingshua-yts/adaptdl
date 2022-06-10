@@ -71,7 +71,7 @@ class AdaptDLAllocator(object):
         job = event["object"]
         namespace = job["metadata"]["namespace"]
         name = job["metadata"]["name"]
-
+        # 获取job
         try:
             job = await self._objs_api.get_namespaced_custom_object(
                 "adaptdl.petuum.com", "v1", namespace, "adaptdljobs", name
@@ -98,11 +98,10 @@ class AdaptDLAllocator(object):
         node_infos, _ = await self._find_nodes()
 
         # get the node to allocate
-        new_allocation = self._policy.allocate_job(
-                            job_info, node_infos)
+        new_allocation = self._policy.allocate_job( job_info, node_infos)
         patch = {"status": {"allocation": new_allocation}}
-        LOG.info("Patch AdaptdlJob %s/%s: %s ",
-                 namespace, name, patch)
+        
+        LOG.info("Patch AdaptdlJob %s/%s: %s ", namespace, name, patch)
         await patch_job_status(self._objs_api, namespace, name, patch)
 
     async def _optimize_all_loop(self):
@@ -116,21 +115,19 @@ class AdaptDLAllocator(object):
 
     async def _optimize_all(self):
         LOG.info("Running allocator loop")
-        nodes, node_template = await self._find_nodes(
-                                   pod_label_selector="!adaptdl/job"
-                               )
-        LOG.info("Node resources: %s",
-                 {k: v.resources for k, v in nodes.items()})
-        jobs, prev_allocations = \
-            await self._find_jobs_and_allocations()
-        LOG.info("Job resources: %s",
-                 {k: v.resources for k, v in jobs.items()})
+
+        nodes, node_template = await self._find_nodes( pod_label_selector="!adaptdl/job" )
+        LOG.info("Node resources: %s", {k: v.resources for k, v in nodes.items()})
+
+        jobs, prev_allocations =  await self._find_jobs_and_allocations()
+        LOG.info("Job resources: %s", {k: v.resources for k, v in jobs.items()})
+
         start = time.time()
-        allocations = self._allocate(jobs, nodes, prev_allocations,
-                                     node_template)
+        allocations = self._allocate(jobs, nodes, prev_allocations, node_template)
+
         duration = time.time() - start
-        LOG.info("Allocations (in %.3f sec): %s", duration,
-                 allocations)
+        LOG.info("Allocations (in %.3f sec): %s", duration, allocations)
+        
         await self._update_allocations(allocations)
 
     async def _update_allocations(self, allocations):
